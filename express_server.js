@@ -12,6 +12,17 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+const generateRandomString = () => {
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  const charactersLength = characters.length;
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -45,8 +56,13 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+app.post("/urls", (req, res) => {
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`)
+});
 
-app.post("/urls", (req,res) => {
-  console.log(req.body);
-  res.send("OK")
-})
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL]
+  res.redirect(longURL);
+});
