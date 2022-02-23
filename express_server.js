@@ -59,16 +59,23 @@ app.listen(PORT, () => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`)
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
-app.post("/urls/:shortURL/delete", (req,res)=>{
-  const shortURL = req.params.shortURL
-  delete urlDatabase[shortURL]
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+});
+
+app.post("/urls/:shortURL", (req, res) => {
+  newURL = req.body.longURL
+  shortURL = req.params.shortURL
+  urlDatabase[shortURL] = newURL
   res.redirect("/urls")
-})
+});
