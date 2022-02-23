@@ -79,3 +79,9 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = newURL
   res.redirect("/urls")
 });
+
+app.post("/login", (req,res)=>{
+  res.cookie("username",req.body.username)
+  res.redirect("/urls")
+})
+
