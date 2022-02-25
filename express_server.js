@@ -11,8 +11,14 @@ app.use(cookieParser());
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const generateRandomString = () => {
@@ -49,14 +55,20 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    user: users[req.cookies.user_id],
+  };
+  if (templateVars.user) {
+    res.render("urls_new", templateVars);
+  }
+  res.redirect("/login");
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
-    user,
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    user: users[req.cookies.user_id],
   };
   res.render("urls_show", templateVars);
 });
@@ -66,14 +78,22 @@ app.listen(PORT, () => {
 });
 
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);
+  if (req.cookies.user_id) {
+    let shortURL = generateRandomString();
+    urlDatabase[shortURL] = {};
+    urlDatabase[shortURL].longURL = req.body.longURL;
+    urlDatabase[shortURL].userID = req.cookies.user_id;
+    res.redirect(`/urls/${shortURL}`);
+  }
+  res.status(403).send("please log in");
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  }
+  res.status(404).send("Cannot find the website")
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
@@ -85,7 +105,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   newURL = req.body.longURL;
   shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = newURL;
+  urlDatabase[shortURL].longURL = newURL;
   res.redirect("/urls");
 });
 
@@ -95,6 +115,9 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (Object.keys(req.cookies).length) {
+    res.redirect("/urls");
+  }
   res.render("account_register");
 });
 
@@ -142,6 +165,9 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  if (Object.keys(req.cookies).length) {
+    res.redirect("/urls");
+  }
   res.render("account_login");
 });
 
