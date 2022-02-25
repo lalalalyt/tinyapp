@@ -41,7 +41,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    user: users[req.cookies.user_id]
+    user: users[req.cookies.user_id],
   };
   // console.log(req.cookies)
   // console.log(templateVars.user)
@@ -89,11 +89,6 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
-  res.redirect("/urls");
-});
-
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
@@ -104,24 +99,64 @@ app.get("/register", (req, res) => {
 });
 
 const users = {
-  "sdf12f": {
+  sdf12f: {
     id: "sdf12f",
     email: "bighead@gmail.com",
     password: "123",
   },
-  "ad129d": {
+  ad129d: {
     id: "ad129d",
     email: "bigburger@gmail.com",
     password: "2345",
   },
 };
 
+const emailLookup = (email) => {
+  for (let user in users) {
+    if (users[user]["email"] === email) {
+      return user;
+    }
+  }
+  return false;
+};
+
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  const user = {id, email, password }
+  if (!email || !password) {
+    res.status(400).send("Please enter valid email address and password!");
+    return;
+  }
+  // console.log(users)
+  // console.log(emailLookup(email))
+  if (emailLookup(email)) {
+    res.status(400).send("This account already exists.");
+    return;
+  }
+
+  const user = { id, email, password };
   users[id] = user;
-  res.cookie("user_id",id)
+  res.cookie("user_id", id);
+  res.redirect("/urls");
+});
+
+app.get("/login", (req, res) => {
+  res.render("account_login");
+});
+
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!emailLookup(email)) {
+    res.status(403).send("This account does not exist");
+    return;
+  }
+  if (emailLookup(email)) {
+    if (password !== users[emailLookup(email)].password) {
+      res.status(403).send("Wrong Password");
+    }
+    res.cookie("user_id", emailLookup(email));
+  }
   res.redirect("/urls");
 });
