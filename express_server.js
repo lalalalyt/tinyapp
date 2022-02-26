@@ -45,6 +45,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  if (req.cookies.user_id) {
   const templateVars = {
     urls: urlDatabase,
     user: users[req.cookies.user_id],
@@ -52,6 +53,10 @@ app.get("/urls", (req, res) => {
   // console.log(req.cookies)
   // console.log(templateVars.user)
   res.render("urls_index", templateVars);
+}
+else {
+  res.status(403).send("Please log in")
+}
 });
 
 app.get("/urls/new", (req, res) => {
@@ -65,12 +70,17 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (req.cookies.user_id && req.cookies.user_id===urlDatabase[req.params.shortURL].userID ){
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies.user_id],
   };
   res.render("urls_show", templateVars);
+}
+else (
+  res.status(403).send("Please log in")
+)
 });
 
 app.listen(PORT, () => {
@@ -97,16 +107,32 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (req.cookies.user_id && req.cookies.user_id===urlDatabase[req.params.shortURL].userID){
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
+  }
+  else if (!req.cookies.user_id) {
+    res.status(403).send("Please log in!")
+  }
+  else if (!urlDatabase[req.params.shortURL]){
+    res.status(403).send("This shortURL does not exist.")
+  }
 });
 
 app.post("/urls/:shortURL", (req, res) => {
+  if (req.cookies.user_id && req.cookies.user_id===urlDatabase[req.params.shortURL].userID){
   newURL = req.body.longURL;
   shortURL = req.params.shortURL;
   urlDatabase[shortURL].longURL = newURL;
   res.redirect("/urls");
+  }
+  else if (!req.cookies.user_id) {
+    res.status(403).send("Please log in!")
+  }
+  else if (!urlDatabase[req.params.shortURL]){
+    res.status(403).send("This shortURL does not exist.")
+  }
 });
 
 app.post("/logout", (req, res) => {
