@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const bcrypt = require('bcryptjs');
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -151,12 +152,12 @@ const users = {
   sdf12f: {
     id: "sdf12f",
     email: "bighead@gmail.com",
-    password: "123",
+    hashedPassword: bcrypt.hashSync("123",10)
   },
   ad129d: {
     id: "ad129d",
     email: "bigburger@gmail.com",
-    password: "2345",
+    hashedPassword: bcrypt.hashSync("2345",10)
   },
 };
 
@@ -173,6 +174,7 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10)
   if (!email || !password) {
     res.status(400).send("Please enter valid email address and password!");
     return;
@@ -184,8 +186,9 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  const user = { id, email, password };
+  const user = { id, email, hashedPassword};
   users[id] = user;
+  // console.log("entered password:", password, "hashed password:", hashedPassword, users)
   res.cookie("user_id", id);
   res.redirect("/urls");
 });
@@ -205,7 +208,7 @@ app.post("/login", (req, res) => {
     return;
   }
   if (emailLookup(email)) {
-    if (password !== users[emailLookup(email)].password) {
+    if (!bcrypt.compareSync(password, users[emailLookup(email)].hashedPassword)) {
       res.status(403).send("Wrong Password");
     }
     res.cookie("user_id", emailLookup(email));
